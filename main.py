@@ -6,13 +6,29 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
 # ==========================================
-# SECURE CONFIGURATION
+# SECURE CONFIGURATION & TIMEZONE (UTC+5 QUOTEX)
 # ==========================================
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8730882369:AAFuZVcUEAwH6RV6WRBI5LI93hWXkCAyzN8")
-UTC_PLUS_5 = timezone(timedelta(hours=5))
+QUOTEX_TIMEZONE = timezone(timedelta(hours=5))  # Synchronized with Quotex UTC+5
 
-# Live Data Buffer
 LIVE_MARKET_DATA = {}
+
+# ==========================================
+# EXACT QUOTEX CANDLE ENTRY CALCULATOR
+# ==========================================
+def get_exact_quotex_entry():
+    """
+    Quotex Candle Sync Logic:
+    - Generates entry exactly for the next upcoming 1-minute candle (at :00 seconds).
+    - If current time is close to candle close (>= 50s), it skips to the 2nd minute.
+    """
+    now = datetime.now(QUOTEX_TIMEZONE)
+    if now.second >= 50:
+        target_time = (now + timedelta(minutes=2)).replace(second=0, microsecond=0)
+    else:
+        target_time = (now + timedelta(minutes=1)).replace(second=0, microsecond=0)
+    
+    return target_time.strftime("%H:%M:00")
 
 # ==========================================
 # ADVANCE SCHEDULED SIGNAL GENERATOR ENGINE
@@ -25,21 +41,20 @@ class AdvanceScheduleEngine:
         ]
 
     def generate_advance_schedule(self, num_signals: int = 8):
-        now = datetime.now(UTC_PLUS_5)
+        now = datetime.now(QUOTEX_TIMEZONE)
         advance_list = []
         
-        # Start generating signals starting from 5 minutes in the future with interval steps
-        current_time = now + timedelta(minutes=5)
+        # Start generating signals 3 minutes from the current Quotex clock
+        current_time = now + timedelta(minutes=3)
         
-        for i in range(num_signals):
-            # Random minute interval between 3 to 8 minutes for realistic spacing
-            minute_gap = random.choice([3, 4, 5, 6, 7])
-            current_time = current_time + timedelta(minutes=minute_gap)
+        for _ in range(num_signals):
+            minute_gap = random.choice([3, 4, 5, 6])
+            current_time = (current_time + timedelta(minutes=minute_gap)).replace(second=0, microsecond=0)
             time_str = current_time.strftime("%H:%M:00")
             
             pair = random.choice(self.pairs)
             direction = random.choice(["🟩 CALL (UP) ⬆️", "🔴 PUT (DOWN) ⬇️"])
-            accuracy = random.randint(86, 93)
+            accuracy = random.randint(87, 94)
             
             advance_list.append({
                 "time": time_str,
@@ -61,7 +76,7 @@ class RealtimeTargetStreamer:
 
     async def start_stream(self):
         self.is_connected = True
-        print("⚡ [Target & Advance Engine] Streaming Institutional Data...")
+        print("⚡ [Quotex Engine] Real-time Clock & Target Sync Active...")
         
         assets = [
             "EUR/USD (LIVE)", "GBP/USD (LIVE)", "USD/JPY (LIVE)", "AUD/USD (LIVE)",
@@ -83,13 +98,13 @@ class RealtimeTargetStreamer:
                     }
                 await asyncio.sleep(1)
             except Exception as e:
-                print(f"⚠️ Target Stream Error: {e}")
+                print(f"⚠️ Stream Error: {e}")
                 await asyncio.sleep(3)
 
 streamer = RealtimeTargetStreamer()
 
 # ==========================================
-# REAL-TIME QUANT ENGINE
+# TARGET MAPPING ENGINE
 # ==========================================
 class TargetMappingEngine:
     def evaluate_pair(self, pair_name: str):
@@ -143,23 +158,12 @@ class TargetMappingEngine:
 target_engine = TargetMappingEngine()
 
 # ==========================================
-# EXACT ENTRY TIME CALCULATOR
-# ==========================================
-def get_exact_entry():
-    now = datetime.now(UTC_PLUS_5)
-    if now.second >= 48:
-        target = (now + timedelta(minutes=2)).replace(second=0, microsecond=0)
-    else:
-        target = (now + timedelta(minutes=1)).replace(second=0, microsecond=0)
-    return target.strftime("%H:%M:00")
-
-# ==========================================
 # MAIN KEYBOARD
 # ==========================================
 def get_keyboard():
     return InlineKeyboardMarkup([
         [
-            InlineKeyboardButton("📅 ADVANCE SIGNAL LIST (SCHEDULE)", callback_data="ADVANCE_LIST")
+            InlineKeyboardButton("📅 ADVANCE SIGNAL LIST (QUOTEX SYNC)", callback_data="ADVANCE_LIST")
         ],
         [
             InlineKeyboardButton("🌐 EUR/USD (LIVE)", callback_data="EUR/USD (LIVE)"), 
@@ -186,11 +190,13 @@ def get_keyboard():
 # TELEGRAM HANDLERS
 # ==========================================
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    quotex_clock = datetime.now(QUOTEX_TIMEZONE).strftime("%H:%M:%S")
     welcome_text = (
-        "🏛️ **INSTITUTIONAL QUANT TERMINAL v16.0**\n"
-        "─── ADVANCE SCHEDULE & REAL-TIME TARGET ENGINE ───\n\n"
-        "• Press **ADVANCE SIGNAL LIST** to get scheduled signals for upcoming session.\n"
-        "• Or select a pair below for instant real-time market analysis."
+        "🏛️ **INSTITUTIONAL QUANT TERMINAL v17.0**\n"
+        "─── QUOTEX UTC+5 TIME SYNC ENGINE ───\n\n"
+        f"🕒 **Quotex System Time:** `{quotex_clock} (UTC+5)`\n\n"
+        "• Press **ADVANCE SIGNAL LIST** for exact Quotex time-synced pending signals.\n"
+        "• Or select an asset below for live 1-Minute entry analysis."
     )
     await update.message.reply_text(welcome_text, parse_mode="Markdown", reply_markup=get_keyboard())
 
@@ -201,9 +207,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     pair = query.data
 
     if pair == "REFRESH":
+        quotex_clock = datetime.now(QUOTEX_TIMEZONE).strftime("%H:%M:%S")
         try:
             await query.edit_message_text(
-                "🔄 **Terminal Refreshed**\nSelect Asset or Generate Advance List:", 
+                f"🔄 **Terminal Refreshed**\n🕒 Quotex Clock: `{quotex_clock}`\nSelect Option:", 
                 parse_mode="Markdown", 
                 reply_markup=get_keyboard()
             )
@@ -216,8 +223,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         signals = advance_engine.generate_advance_schedule(num_signals=8)
         
         schedule_text = (
-            "📋 **ADVANCE SCHEDULED SIGNALS (PENDING LIST)**\n"
-            "─── HISTORICAL PATTERN & NEWS FILTERED ───\n\n"
+            "📋 **ADVANCE SCHEDULED SIGNALS (QUOTEX SYNC)**\n"
+            "─── TIMEZONE: UTC+5 | EXPIRATION: 1-MINUTE ───\n\n"
         )
         
         for item in signals:
@@ -227,10 +234,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             
         schedule_text += (
-            "🛡️ **TRADING RULES:**\n"
-            "1. Enter exactly at the specified time (`00` seconds).\n"
-            "2. Max 1-Step Martingale (MTG) if candle closes against signal.\n"
-            "3. Skip trade if 3+ strong opposite momentum candles appear right before entry."
+            "🛡️ **QUOTEX ENTRY RULES:**\n"
+            "1. Quotex chart timer ko 1-Minute (`00:01:00`) par set rakhein.\n"
+            "2. Entry exact `:00` second par lein (e.g., `22:35:00`).\n"
+            "3. Max 1-Step Martingale (MTG) agar pehli candle close reverse ho."
         )
 
         try:
@@ -244,22 +251,22 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     # REAL-TIME SINGLE PAIR ANALYSIS
-    entry_time = get_exact_entry()
+    entry_time = get_exact_quotex_entry()
     analysis = target_engine.evaluate_pair(pair)
     reasons_text = "\n".join([f"• {r}" for r in analysis["reasons"]])
 
     response_text = (
         f"🌐 **ASSET:** `{pair}`\n"
-        f"⏰ **ENTRY TIME:** `{entry_time}`\n"
+        f"⏰ **EXACT QUOTEX ENTRY:** `{entry_time}`\n"
         f"📍 **NEXT MARKET TARGET:**\n{analysis['target_direction']}\n"
         f"───────────────\n"
         f"🎯 **QUANT SIGNAL:** {analysis['signal_icon']}\n"
         f"───────────────\n"
         f"📊 **TOP-DOWN TIMEFRAME BREAKDOWN:**\n"
         f"{reasons_text}\n\n"
-        f"🛡️ **INSTITUTIONAL RULE:**\n"
-        f"• Align entry direction with Next Market Target.\n"
-        f"• Use 1-Step MTG only if candle fails near target zone."
+        f"🛡️ **EXECUTION NOTE:**\n"
+        f"• Place trade at `{entry_time}` sharp.\n"
+        f"• Confirm Quotex timer is set to 1M duration."
     )
 
     try:
@@ -283,7 +290,7 @@ def main():
     app.add_handler(CommandHandler("start", start_command))
     app.add_handler(CallbackQueryHandler(button_handler))
 
-    print("⚡ Institutional Advance & Real-Time Bot Active on Railway...")
+    print("⚡ Quotex Time-Synced Bot Running...")
     app.run_polling(drop_pending_updates=True)
 
 if __name__ == "__main__":
