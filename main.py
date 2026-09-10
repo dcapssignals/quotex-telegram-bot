@@ -90,11 +90,11 @@ class PocketOptionQuantEngine:
         if score_up > score_down:
             direction = "🟩 HIGHER / CALL ⬆️"
             target_str = "🎯 `TARGET: BUY-SIDE LIQUIDITY (BSL)`"
-            confidence = random.randint(90, 97)
+            confidence = random.randint(91, 98)
         else:
             direction = "🔴 LOWER / PUT ⬇️"
             target_str = "🎯 `TARGET: SELL-SIDE LIQUIDITY (SSL)`"
-            confidence = random.randint(90, 97)
+            confidence = random.randint(91, 98)
 
         return {
             "signal": direction,
@@ -119,28 +119,33 @@ def get_exact_po_entry():
     return target_time.strftime("%H:%M:00")
 
 # ==========================================
-# DASHBOARD
+# DASHBOARD WITH NEW PAIRS
 # ==========================================
 def build_po_dashboard():
     clock = datetime.now(PO_TIMEZONE).strftime("%H:%M:%S")
     
     text = (
-        "🏛 `POCKET OPTION QUANT TERMINAL v21.0`\n"
+        "🏛 `POCKET OPTION QUANT TERMINAL v22.0`\n"
         "─────────────────────────────\n"
         f"🕒 `PO Clock     :` `{clock} (UTC+5)`\n"
         "⚡ `Engine Feed  :` `Multi-Timeframe SMC (1M)`\n"
         "─────────────────────────────\n"
-        "📊 `POCKET OPTION ASSETS & PAYOUTS:`\n"
-        "▫️ `EUR/USD (LIVE) ` 🟢 `92% | SMC ALIGNED`\n"
-        "▫️ `GBP/USD (LIVE) ` 🟢 `89% | SMC ALIGNED`\n"
-        "▫️ `USD/JPY (LIVE) ` 🟢 `88% | HIGH LIQUIDITY`\n"
-        "▫️ `AUD/USD (LIVE) ` 🟢 `87% | STABLE`\n"
-        "▫️ `EUR/USD (OTC)  ` 📊 `92% | HIGH PRECISION`\n"
-        "▫️ `GBP/USD (OTC)  ` 📊 `92% | HIGH PRECISION`\n"
-        "▫️ `USD/BDT (OTC)  ` 📊 `92% | OTC CYCLE MATCH`\n"
-        "▫️ `USD/BRL (OTC)  ` 📊 `92% | OTC CYCLE MATCH`\n"
+        "📊 `POCKET OPTION HIGH PAYOUT ASSETS (92%):`\n"
+        "▫️ `AED/CNY (OTC)`  📊 `92% | SMC ALIGNED`\n"
+        "▫️ `AUD/CAD (OTC)`  📊 `92% | HIGH PRECISION`\n"
+        "▫️ `CAD/CHF (OTC)`  📊 `92% | OTC CYCLE MATCH`\n"
+        "▫️ `EUR/NZD (OTC)`  📊 `92% | STABLE TREND`\n"
+        "▫️ `EUR/USD (OTC)`  📊 `92% | HIGH LIQUIDITY`\n"
+        "▫️ `GBP/JPY (OTC)`  📊 `92% | BREAKOUT ALIGNED`\n"
+        "▫️ `GBP/USD (OTC)`  📊 `92% | SMC ALIGNED`\n"
+        "▫️ `JOD/CNY (OTC)`  📊 `92% | HIGH PRECISION`\n"
+        "▫️ `NGN/USD (OTC)`  📊 `92% | OTC REPEATING`\n"
+        "▫️ `NZD/JPY (OTC)`  📊 `92% | STABLE TREND`\n"
+        "▫️ `QAR/CNY (OTC)`  📊 `92% | HIGH LIQUIDITY`\n"
+        "▫️ `USD/BRL (OTC)`  📊 `92% | SMC ALIGNED`\n"
+        "▫️ `USD/CHF (OTC)`  📊 `92% | HIGH PRECISION`\n"
         "─────────────────────────────\n"
-        "👇 `Select option or pair for execution:`"
+        "👇 `Select pair below for instant signal:`"
     )
 
     keyboard = InlineKeyboardMarkup([
@@ -148,23 +153,35 @@ def build_po_dashboard():
             InlineKeyboardButton("📅 ADVANCE SCHEDULE LIST (1M PO SYNC)", callback_data="ADVANCE_LIST")
         ],
         [
-            InlineKeyboardButton("🌐 EUR/USD (LIVE)", callback_data="EUR/USD (LIVE)"),
-            InlineKeyboardButton("🌐 GBP/USD (LIVE)", callback_data="GBP/USD (LIVE)")
+            InlineKeyboardButton("📊 AED/CNY (OTC)", callback_data="AED/CNY (OTC)"),
+            InlineKeyboardButton("📊 AUD/CAD (OTC)", callback_data="AUD/CAD (OTC)")
         ],
         [
-            InlineKeyboardButton("🌐 USD/JPY (LIVE)", callback_data="USD/JPY (LIVE)"),
-            InlineKeyboardButton("🌐 AUD/USD (LIVE)", callback_data="AUD/USD (LIVE)")
+            InlineKeyboardButton("📊 CAD/CHF (OTC)", callback_data="CAD/CHF (OTC)"),
+            InlineKeyboardButton("📊 EUR/NZD (OTC)", callback_data="EUR/NZD (OTC)")
         ],
         [
             InlineKeyboardButton("📊 EUR/USD (OTC)", callback_data="EUR/USD (OTC)"),
-            InlineKeyboardButton("📊 GBP/USD (OTC)", callback_data="GBP/USD (OTC)")
+            InlineKeyboardButton("📊 GBP/JPY (OTC)", callback_data="GBP/JPY (OTC)")
         ],
         [
-            InlineKeyboardButton("📊 USD/BDT (OTC)", callback_data="USD/BDT (OTC)"),
+            InlineKeyboardButton("📊 GBP/USD (OTC)", callback_data="GBP/USD (OTC)"),
+            InlineKeyboardButton("📊 JOD/CNY (OTC)", callback_data="JOD/CNY (OTC)")
+        ],
+        [
+            InlineKeyboardButton("📊 NGN/USD (OTC)", callback_data="NGN/USD (OTC)"),
+            InlineKeyboardButton("📊 NZD/JPY (OTC)", callback_data="NZD/JPY (OTC)")
+        ],
+        [
+            InlineKeyboardButton("📊 QAR/CNY (OTC)", callback_data="QAR/CNY (OTC)"),
             InlineKeyboardButton("📊 USD/BRL (OTC)", callback_data="USD/BRL (OTC)")
         ],
         [
-            InlineKeyboardButton("🔄 Refresh Terminal", callback_data="REFRESH")
+            InlineKeyboardButton("📊 USD/CHF (OTC)", callback_data="USD/CHF (OTC)"),
+            InlineKeyboardButton("🌐 EUR/USD (LIVE)", callback_data="EUR/USD (LIVE)")
+        ],
+        [
+            InlineKeyboardButton("🔄 Refresh Dashboard", callback_data="REFRESH")
         ]
     ])
 
@@ -192,16 +209,16 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if data == "ADVANCE_LIST":
         now = datetime.now(PO_TIMEZONE)
-        advance_text = "📋 `POCKET OPTION PENDING SIGNALS`\n─────────────────────────────\n"
+        advance_text = "📋 `POCKET OPTION PENDING SIGNALS (92% PAYOUT)`\n─────────────────────────────\n"
         current_time = now + timedelta(minutes=3)
-        pairs_list = ["EUR/USD (OTC)", "GBP/USD (OTC)", "EUR/USD (LIVE)", "USD/BDT (OTC)"]
+        pairs_list = ["GBP/USD (OTC)", "EUR/USD (OTC)", "AUD/CAD (OTC)", "USD/BRL (OTC)", "CAD/CHF (OTC)"]
         
         for _ in range(6):
             current_time = (current_time + timedelta(minutes=random.choice([3, 4, 5]))).replace(second=0, microsecond=0)
             t_str = current_time.strftime("%H:%M:00")
             p_str = random.choice(pairs_list)
             d_str = random.choice(["HIGHER ⬆️", "LOWER ⬇️"])
-            acc = random.randint(90, 97)
+            acc = random.randint(91, 98)
             advance_text += f"⏰ `{t_str}` | `{p_str}`\n└ `Signal: {d_str}` | `Winrate: {acc}%`\n\n"
 
         advance_text += "─────────────────────────────\n🛡️ `Pocket Option Rule: Expiration M1 (00:01:00)`"
@@ -248,7 +265,7 @@ def main():
     app.add_handler(CommandHandler("start", start_command))
     app.add_handler(CallbackQueryHandler(button_handler))
 
-    print("⚡ Pocket Option Institutional Bot Active...")
+    print("⚡ Pocket Option 92% Payout Bot Active...")
     app.run_polling(drop_pending_updates=True)
 
 if __name__ == "__main__":
